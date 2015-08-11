@@ -32,12 +32,13 @@ function renameFiles {
                 fi
 
                 # replace "- _" characters with "." so when used as regex it will match files 
-                # that contain the same name disregarding the separator used
+                # that contain the same name no matter what separator was used
                 local nameRegex="${subCleanName//[-\ _]/\.}"
 
-                # replace " _." separators for dash separator
+                # replace " _." separators for configured separator
                 local nameFormatted="${subCleanName//[-\ _\.]/$separator}"
 
+                # rename files
                 for fileName2 in *
                 do
                     if [[ -f "$fileName2" ]]; then
