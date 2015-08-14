@@ -31,7 +31,7 @@ function renameFiles {
                     # subCleanName=${BASH_REMATCH[1]}
                 fi
 
-                # replace "- _" characters with "." so when used as regex it will match files 
+                # replace "- _" characters with "." so when used as regex it will match files
                 # that contain the same name no matter what separator was used
                 local nameRegex="${subCleanName//[-\ _]/\.}"
 
@@ -42,7 +42,7 @@ function renameFiles {
                 for fileName2 in *
                 do
                     if [[ -f "$fileName2" ]]; then
-                        # this should pass for both movie and subtitle file because of the name regex 
+                        # this should pass for both movie and subtitle file because of the name regex
                         # (provided both movie and subtitle file use the same movie name as its base)
                         if [[ $fileName2 =~ ^$nameRegex(.*?)\.([a-z0-9]{3,4})$ ]]; then
                             local extension=${BASH_REMATCH[2]}
