@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import sys, getopt, os, re, glob
 
 def separatorList():
@@ -13,21 +11,20 @@ def replaceSeparators(inputString, desiredSeparator):
     return outputString
 
 def extractCleanNameWithExtension(fullName):
-    # purge subtitle name of some ID in parentheses at the end if present (titulky.com format)
-    result = re.search(r'^(.*?)(?:\([0-9]+\))?\.([a-z]{3})$', fullName, re.I)
+    # purge file name of some ID in parentheses at the end if present (titulky.com subtitle format)
+    result = re.search(r'^(.*?)(?:\([0-9]+\))?\.([a-z]+)$', fullName, re.I)
     if (result):
         name = result.group(1)
         extension = result.group(2)
         cleanName = name
 
-        # in case subtitles name contains Season/Episode part (TV show), stop there when looking for name
+        # in case file name contains Season/Episode part (TV show), stop there when looking for name
         result = re.search(r'^(.*?)(s[0-9]{1,2}e[0-9]{1,2})', name, re.I)
         if (result):
             cleanName = result.group(1) + result.group(2).upper()
         else:
-            # subtitles name contain some movie information (year, format, etc.), use that to detect actual movie name
-            # TODO make sure year is only matched if it is not part of the movie title (i.e. is surrounded by separators)
-            result = re.search(r'^(.*?)(hdtv|19[0-9]{2}|20[0-9]{2}|hd-?ts|xvid|hdrip|brrip|x264|480p|720p|1080p|ac3-ev)', name, re.I)
+            # file name contain some movie information (format, resolution, etc.), use that to detect actual movie name
+            result = re.search(r'^(.*?)(hdtv|hd-?ts|xvid|hdrip|brrip|x264|480p|720p|1080p|ac3-ev)', name, re.I)
             if (result):
                 cleanName = result.group(1)
 
@@ -44,88 +41,92 @@ def selectFiles(types):
 
     return files
 
-def rename(origName, newName):
+def handleRename(oldFileName, newFileName, interactiveMode, message):
+    if (interactiveMode):
+        if confirm(message):
+            renameFile(oldFileName, newFileName)
+    else:
+        renameFile(oldFileName, newFileName)
+        print message
+
+def confirm(message):
+    proceed = raw_input(message + ", continue? (y/N) ")
+    return proceed.lower() == 'y'
+
+def renameFile(origName, newName):
     # os.rename(origName, newName)
     return
 
-def renameSubtitles(subtitleFiles, separator, interactiveMode):
-    subtitlesRegexes = []
-    subtitlesRenamedTo = []
+def renameVideoSubtitleFiles(fileName, filesRenamedTo):
+    cleanName, extension = extractCleanNameWithExtension(fileName)
 
-    for subtitleFile in subtitleFiles:
-        cleanSubtitleName, subtitleExtension = extractCleanNameWithExtension(subtitleFile)
+    if not cleanName:
+        return
 
-        if not cleanSubtitleName:
-            continue
+    # replace "-._ " separators for configured separator
+    nameFormatted = replaceSeparators(cleanName, separator)
 
-        # replace separator character with "." character so when used as regex it will match Movie files 
-        # that contain the same name no matter what separator was used in those files
-        subtitlesRegexes.append(replaceSeparators(cleanSubtitleName, '.'))
+    newFileName = nameFormatted + '.' + extension
 
-        # replace "-._ " separators for configured separator
-        nameFormatted = replaceSeparators(cleanSubtitleName, separator)
+    # file name is already formatted correctly
+    if newFileName == fileName:
+        filesRenamedTo.append(fileName)
+        print "File " + fileName + " is already in correct format, skipping..."
+        return
 
-        nameWithExtension = nameFormatted + '.' + subtitleExtension
+    if (newFileName not in filesRenamedTo):
+        filesRenamedTo.append(newFileName)
 
-        # filename is already formatted correctly
-        if nameWithExtension == subtitleFile:
-            subtitlesRenamedTo.append(subtitleFile)
-            print "File " + subtitleFile + " is already in correct format, skipping..."
-            continue
+        message = "File will be renamed from " + fileName + " to " + newFileName
+    else:
+        i = 1
+        _newFileName = newFileName
+        newFileName = nameFormatted + "(" + str(i) + ")." + extension
+        while (newFileName in filesRenamedTo):
+            i += 1
+            newFileName = nameFormatted + "(" + str(i) + ")." + extension
 
-        if (nameWithExtension not in subtitlesRenamedTo):
-            subtitlesRenamedTo.append(nameWithExtension)
+        filesRenamedTo.append(newFileName)
 
-            message = "File will be renamed from " + subtitleFile + " to " + nameWithExtension
-        else:
-            i = 1
-            _nameWithExtension = nameWithExtension
-            nameWithExtension = nameFormatted + "(" + str(i) + ")." + subtitleExtension
-            while (nameWithExtension in subtitlesRenamedTo):
-                i += 1
-                nameWithExtension = nameFormatted + "(" + str(i) + ")." + subtitleExtension
+        message = "File will be renamed from " + fileName + " to " + newFileName + " (" + _newFileName + " already exists)" 
 
-            subtitlesRenamedTo.append(nameWithExtension)
-
-            message = "File will be renamed from " + subtitleFile + " to " + nameWithExtension + " (" + _nameWithExtension + " already exists)" 
-
-        if (interactiveMode):
-            proceed = raw_input(message + ", continue? (y/N) ")
-            if proceed.lower() == 'y':
-                rename(subtitleFile, nameWithExtension)
-        else:
-            rename(subtitleFile, nameWithExtension)
-            print message
-
-    return subtitlesRegexes
-
-def renameVideoFiles(videoFiles, subtitlesRegexes, separator, interactiveMode):
-    # sort subtitle name regexes based on their length, longest one first
-    subtitleRegexesSorted = sorted(subtitlesRegexes, key = len, reverse = True)
-
-    for videoFile in videoFiles:
-        for nameRegex in subtitleRegexesSorted:
-            regex = r'^' + nameRegex + '(?:.*?)\.([a-z0-9]{3,4})$'
-            result = re.search(regex, videoFile, re.I)
-            if (result):
-                movieExtension = result.group(1)
-
-                newMovieName = replaceSeparators(nameRegex, separator) + '.' + movieExtension
-                print "MOVIE renaming from ", videoFile, " to ", newMovieName
-                break
+    handleRename(fileName, newFileName, interactiveMode, message)
 
 def renameFiles(separator, interactiveMode, recursiveMode):
     # list of all subtitle filenames in current directory, sorted by length with shortest one first
     subtitleFiles = sorted(selectFiles(['*.srt', '*.sub']), key = len)
 
-    # list of all movie/TV Show filenames in current directory
-    videoFiles = selectFiles(['*.mkv', '*.avi', '*.mp4', '*.m4p', '*.m4v', '*.mpg', '*.mp2', '*.mpeg', '*.mpe', '*.mpv', '*.m2v'])
+    # list of all movie/TV Show filenames in current directory, sorted by length with shortest one first
+    videoFiles = sorted(selectFiles(['*.mkv', '*.avi', '*.mp4', '*.m4p', '*.m4v', '*.mpg', '*.mp2', '*.mpeg', '*.mpe', '*.mpv', '*.m2v']), key = len)
 
-    # rename subtitles files
-    newSubtitleNameRegexes = renameSubtitles(subtitleFiles, separator, interactiveMode)
+    filesRenamedTo = []
 
-    # rename video files base on new subtitles names
-    renameVideoFiles(videoFiles, newSubtitleNameRegexes, separator, interactiveMode)
+    # rename files
+    if (len(videoFiles) == 1 and len(subtitleFiles) == 1):
+        # only one video and subtitles file, I guess it is safe to rename video file based on clean subtitles file name
+        videoFile = videoFiles[0]
+        subtitleFile = subtitleFiles[0]
+
+        renameVideoSubtitleFiles(subtitleFile, filesRenamedTo)
+
+        newSubtitleFile = filesRenamedTo[0]
+        result = re.search(r'^(.*?)\.([a-z]+)$', newSubtitleFile, re.I)
+        if result:
+            name = result.group(1)
+
+            result = re.search(r'^(.*?)\.([a-z]+)$', videoFile, re.I)
+            if result:
+                extension = result.group(2)
+                newVideoFileName = name + '.' + extension
+
+                message = "File will be renamed from " + videoFile + " to " + newVideoFileName
+
+                handleRename(videoFile, newVideoFileName, interactiveMode, message)
+
+    else:
+        videoSubtitlesFiles = subtitleFiles + videoFiles
+        for _file in videoSubtitlesFiles:
+            renameVideoSubtitleFiles(_file, filesRenamedTo)
 
     if (recursiveMode):
         # look for another directories within the current directory and continue renaming files in them
@@ -142,14 +143,14 @@ def usage():
     print "Usage: "+ sys.argv[0] + " [options]"
     print "Options:"
     print "\t-i, --interactive"
-    print "\t\t Run interactively"
+    print "\t\t Run interactively (you will have to confirm before each file gets renamed)"
     print "\t-r, --recursive"
     print "\t\t Rename files recursively in child directories"
     print "\t-s separator, --separator separator"
     print "\t\t Use separator for separating words in renamed file (default separator is '-')"
 
 def main(separator, interactiveMode, recursiveMode):
-    os.chdir('..')
+    os.chdir('../testing')
 
     renameFiles(separator, interactiveMode, recursiveMode)
 

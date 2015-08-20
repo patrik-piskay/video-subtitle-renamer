@@ -19,7 +19,7 @@ class TestRenamer(unittest.TestCase):
             },
             {
                 'input': 'Some-Movie-2015.HDTV.x264.sub',
-                'output': ['Some-Movie', 'sub']
+                'output': ['Some-Movie-2015', 'sub']
             },
             # TODO add more test cases
         ]
