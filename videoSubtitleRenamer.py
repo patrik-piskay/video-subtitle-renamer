@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import sys, getopt, os, re, glob
 
 def separatorList():
@@ -150,9 +152,9 @@ def usage():
     print "\t\t Use separator for separating words in renamed file (default separator is '-')"
 
 def main(separator, interactiveMode, recursiveMode):
-    os.chdir('../testing')
+    #os.chdir('../testing')
 
-    renameFiles(separator, interactiveMode, recursiveMode)
+    #renameFiles(separator, interactiveMode, recursiveMode)
 
 if __name__ == '__main__':
     try:
