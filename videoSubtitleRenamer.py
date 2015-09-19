@@ -156,6 +156,8 @@ def usage():
     print "\t\t Rename files recursively in child directories"
     print "\t-s separator, --separator separator"
     print "\t\t Use separator for separating words in renamed file (default separator is '-')"
+    print "\t--testing"
+    print "\t\t Run without actually renaming the files (only to see output)"
 
 def main(separator, interactiveMode, recursiveMode, testingMode):
     try:
