@@ -1,5 +1,5 @@
 import unittest
-from movieSubtitleRenamer import extractCleanNameWithExtension
+from videoSubtitleRenamer import extractCleanNameWithExtension
 
 class TestRenamer(unittest.TestCase):
 
