@@ -52,7 +52,9 @@ def handleRename(oldFileName, newFileName, message, options):
             print "Skipped"
     else:
         renameFile(oldFileName, newFileName, options['testingMode'])
-        print message
+
+        # "will be" substring only makes sense for interactive mode
+        print message.replace('will be ', '')
 
 def confirm(message):
     proceed = raw_input(message + ", continue? (Y/n) ")
