@@ -122,7 +122,7 @@ def renameFiles(separator, options):
         if result:
             name = result.group(1)
 
-            result = re.search(r'^(.*?)\.([a-z]+)$', videoFile, re.I)
+            result = re.search(r'^(.*?)\.([a-z0-9]+)$', videoFile, re.I)
             if result:
                 extension = result.group(2)
                 newVideoFileName = name + '.' + extension
