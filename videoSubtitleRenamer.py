@@ -14,7 +14,7 @@ def replaceSeparators(inputString, desiredSeparator):
 
 def extractCleanNameWithExtension(fullName):
     # purge file name of some ID in parentheses at the end if present (titulky.com subtitle format)
-    result = re.search(r'^(.*?)(?:\([0-9]+\))?\.([a-z]+)$', fullName, re.I)
+    result = re.search(r'^(.*?)(?:\([0-9]+\))?\.([a-z0-9]+)$', fullName, re.I)
     if (result):
         name = result.group(1)
         extension = result.group(2)
@@ -34,7 +34,7 @@ def extractCleanNameWithExtension(fullName):
 
         return [cleanName, extension]
     else:
-        return False
+        return [None, None]
 
 def selectFiles(types):
     files = []
@@ -47,13 +47,16 @@ def handleRename(oldFileName, newFileName, interactiveMode, message):
     if (interactiveMode):
         if confirm(message):
             renameFile(oldFileName, newFileName)
+            print "Renamed"
+        else:
+            print "Skipped"
     else:
         renameFile(oldFileName, newFileName)
         print message
 
 def confirm(message):
-    proceed = raw_input(message + ", continue? (y/N) ")
-    return proceed.lower() == 'y'
+    proceed = raw_input(message + ", continue? (Y/n) ")
+    return proceed.lower() == 'y' or proceed == ''
 
 def renameFile(origName, newName):
     # os.rename(origName, newName)
@@ -63,6 +66,7 @@ def renameVideoSubtitleFiles(fileName, filesRenamedTo):
     cleanName, extension = extractCleanNameWithExtension(fileName)
 
     if not cleanName:
+        print "Name of '" + fileName + "' file does not match expected file format, skipping..."
         return
 
     # replace "-._ " separators for configured separator
@@ -73,13 +77,13 @@ def renameVideoSubtitleFiles(fileName, filesRenamedTo):
     # file name is already formatted correctly
     if newFileName == fileName:
         filesRenamedTo.append(fileName)
-        print "File " + fileName + " is already in correct format, skipping..."
+        print "File '" + fileName + "' is already in correct format, skipping..."
         return
 
     if (newFileName not in filesRenamedTo):
         filesRenamedTo.append(newFileName)
 
-        message = "File will be renamed from " + fileName + " to " + newFileName
+        message = "File will be renamed from '" + fileName + "' to '" + newFileName + "'"
     else:
         i = 1
         _newFileName = newFileName
@@ -90,7 +94,7 @@ def renameVideoSubtitleFiles(fileName, filesRenamedTo):
 
         filesRenamedTo.append(newFileName)
 
-        message = "File will be renamed from " + fileName + " to " + newFileName + " (" + _newFileName + " already exists)" 
+        message = "File will be renamed from '" + fileName + "' to '" + newFileName + "' ('" + _newFileName + "' already exists)" 
 
     handleRename(fileName, newFileName, interactiveMode, message)
 
@@ -121,7 +125,7 @@ def renameFiles(separator, interactiveMode, recursiveMode):
                 extension = result.group(2)
                 newVideoFileName = name + '.' + extension
 
-                message = "File will be renamed from " + videoFile + " to " + newVideoFileName
+                message = "File will be renamed from '" + videoFile + "' to '" + newVideoFileName + "'"
 
                 handleRename(videoFile, newVideoFileName, interactiveMode, message)
 
@@ -152,9 +156,7 @@ def usage():
     print "\t\t Use separator for separating words in renamed file (default separator is '-')"
 
 def main(separator, interactiveMode, recursiveMode):
-    #os.chdir('../testing')
-
-    #renameFiles(separator, interactiveMode, recursiveMode)
+    renameFiles(separator, interactiveMode, recursiveMode)
 
 if __name__ == '__main__':
     try:
