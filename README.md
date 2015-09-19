@@ -34,5 +34,7 @@ Now you will be able to execute the script from any directory by `cd` to that di
 #### Examples
 
 `videoSubtitleRenamer.py` - base mode - running only for files in current directory, non-interactive, dash being used as a separator
+
 `videoSubtitleRenamer.py -i -s .` - running in interactive mode with `.` being used as separator between words
+
 `videoSubtitleRenamer.py -r --testing` - running in recursive and testing mode (files don't get renamed)
