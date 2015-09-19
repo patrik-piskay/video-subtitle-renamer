@@ -94,7 +94,7 @@ def renameVideoSubtitleFiles(fileName, filesRenamedTo):
 
         filesRenamedTo.append(newFileName)
 
-        message = "File will be renamed from '" + fileName + "' to '" + newFileName + "' ('" + _newFileName + "' already exists)" 
+        message = "File will be renamed from '" + fileName + "' to '" + newFileName + "' ('" + _newFileName + "' already exists)"
 
     handleRename(fileName, newFileName, interactiveMode, message)
 
@@ -156,7 +156,11 @@ def usage():
     print "\t\t Use separator for separating words in renamed file (default separator is '-')"
 
 def main(separator, interactiveMode, recursiveMode):
-    renameFiles(separator, interactiveMode, recursiveMode)
+    try:
+        renameFiles(separator, interactiveMode, recursiveMode)
+    except KeyboardInterrupt:
+        print
+        sys.exit(0)
 
 if __name__ == '__main__':
     try:
