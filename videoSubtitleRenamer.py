@@ -43,26 +43,26 @@ def selectFiles(types):
 
     return files
 
-def handleRename(oldFileName, newFileName, interactiveMode, message):
-    if (interactiveMode):
+def handleRename(oldFileName, newFileName, message, options):
+    if (options['interactiveMode']):
         if confirm(message):
-            renameFile(oldFileName, newFileName)
+            renameFile(oldFileName, newFileName, options['testingMode'])
             print "Renamed"
         else:
             print "Skipped"
     else:
-        renameFile(oldFileName, newFileName)
+        renameFile(oldFileName, newFileName, options['testingMode'])
         print message
 
 def confirm(message):
     proceed = raw_input(message + ", continue? (Y/n) ")
     return proceed.lower() == 'y' or proceed == ''
 
-def renameFile(origName, newName):
-    # os.rename(origName, newName)
-    return
+def renameFile(origName, newName, testingMode):
+    if not testingMode:
+        os.rename(origName, newName)
 
-def renameVideoSubtitleFiles(fileName, filesRenamedTo):
+def renameVideoSubtitleFiles(fileName, filesRenamedTo, options):
     cleanName, extension = extractCleanNameWithExtension(fileName)
 
     if not cleanName:
@@ -96,9 +96,9 @@ def renameVideoSubtitleFiles(fileName, filesRenamedTo):
 
         message = "File will be renamed from '" + fileName + "' to '" + newFileName + "' ('" + _newFileName + "' already exists)"
 
-    handleRename(fileName, newFileName, interactiveMode, message)
+    handleRename(fileName, newFileName, message, options)
 
-def renameFiles(separator, interactiveMode, recursiveMode):
+def renameFiles(separator, options):
     # list of all subtitle filenames in current directory, sorted by length with shortest one first
     subtitleFiles = sorted(selectFiles(['*.srt', '*.sub']), key = len)
 
@@ -113,7 +113,7 @@ def renameFiles(separator, interactiveMode, recursiveMode):
         videoFile = videoFiles[0]
         subtitleFile = subtitleFiles[0]
 
-        renameVideoSubtitleFiles(subtitleFile, filesRenamedTo)
+        renameVideoSubtitleFiles(subtitleFile, filesRenamedTo, options)
 
         newSubtitleFile = filesRenamedTo[0]
         result = re.search(r'^(.*?)\.([a-z]+)$', newSubtitleFile, re.I)
@@ -127,14 +127,14 @@ def renameFiles(separator, interactiveMode, recursiveMode):
 
                 message = "File will be renamed from '" + videoFile + "' to '" + newVideoFileName + "'"
 
-                handleRename(videoFile, newVideoFileName, interactiveMode, message)
+                handleRename(videoFile, newVideoFileName, message, options)
 
     else:
         videoSubtitlesFiles = subtitleFiles + videoFiles
         for _file in videoSubtitlesFiles:
-            renameVideoSubtitleFiles(_file, filesRenamedTo)
+            renameVideoSubtitleFiles(_file, filesRenamedTo, options)
 
-    if (recursiveMode):
+    if (options['recursiveMode']):
         # look for another directories within the current directory and continue renaming files in them
         for item in os.listdir('.'):
             if (os.path.isdir(item)):
@@ -142,7 +142,7 @@ def renameFiles(separator, interactiveMode, recursiveMode):
                     continue
 
                 os.chdir(item)
-                renameFiles(separator, interactiveMode, recursiveMode)
+                renameFiles(separator, options)
                 os.chdir('..')
 
 def usage():
@@ -155,16 +155,22 @@ def usage():
     print "\t-s separator, --separator separator"
     print "\t\t Use separator for separating words in renamed file (default separator is '-')"
 
-def main(separator, interactiveMode, recursiveMode):
+def main(separator, interactiveMode, recursiveMode, testingMode):
     try:
-        renameFiles(separator, interactiveMode, recursiveMode)
+        options = {
+            'interactiveMode': interactiveMode,
+            'recursiveMode': recursiveMode,
+            'testingMode': testingMode,
+        }
+
+        renameFiles(separator, options)
     except KeyboardInterrupt:
         print
         sys.exit(0)
 
 if __name__ == '__main__':
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hirs:', ['help', 'interactive', 'recursive', 'separator'])
+        opts, args = getopt.getopt(sys.argv[1:], 'hirs:', ['help', 'interactive', 'recursive', 'separator', 'testing'])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -173,6 +179,7 @@ if __name__ == '__main__':
     separator = '-'
     interactiveMode = False
     recursiveMode = False
+    testingMode = False
 
     for option, value in opts:
         if option in ('-h', '--help'):
@@ -184,5 +191,7 @@ if __name__ == '__main__':
             recursiveMode = True
         elif option in ('-s', '--separator'):
             separator = value
+        elif option in ('--testing'):
+            testingMode = True
 
-    main(separator, interactiveMode, recursiveMode)
+    main(separator, interactiveMode, recursiveMode, testingMode)
