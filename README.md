@@ -1,6 +1,6 @@
 #Video Subtitle renamer
 
-Simple script for renaming video and subtitle files in _current_ directory. It renames video and subtitle files using the same format, removes unnecessary parts of file names as format, resolution, etc., keeping only actual movie/TV show name with season/episode information, resulting in clean names and automatic pairing of video and subtitle files in video players.
+Simple script for renaming video and subtitle files in _current working_ directory. It renames video and subtitle files using the same format, removes unnecessary parts of file names like format, resolution, etc., keeping only actual movie/TV show name with season/episode information, resulting in clean names and automatic pairing of video and subtitle files in video players.
 
 #### Available options
 
